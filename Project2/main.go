@@ -90,8 +90,6 @@ func executeCommand(name string, arg ...string) error {
 	return cmd.Run()
 }
 
-// Implementations of the built-in commands:
-
 func changeDirectory(args ...string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("no path provided")
@@ -124,16 +122,16 @@ func printWorkingDirectory(w io.Writer) error {
 }
 
 func exportVariable(w io.Writer, args ...string) error {
-	// This is a placeholder; setting environment variables in Go is not straightforward.
+
 	return nil
 }
 
 func unsetVariable(args ...string) error {
-	// This is a placeholder; unsetting environment variables in Go is not straightforward.
+
 	return nil
 }
 
 func showHistory(w io.Writer) error {
-	// This is a placeholder; implementing history requires additional logic.
+
 	return nil
 }
