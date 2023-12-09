@@ -8,8 +8,6 @@ import (
 	"os/exec"
 	"os/user"
 	"strings"
-
-	"github.com/jh125486/CSCE4600/Project2/builtins"
 )
 
 func main() {
@@ -45,55 +43,97 @@ func runLoop(r io.Reader, w, errW io.Writer, exit chan struct{}) {
 }
 
 func printPrompt(w io.Writer) error {
-	// Get current user.
-	// Don't prematurely memoize this because it might change due to `su`?
 	u, err := user.Current()
 	if err != nil {
 		return err
 	}
-	// Get current working directory.
 	wd, err := os.Getwd()
 	if err != nil {
 		return err
 	}
-
-	// /home/User [Username] $
 	_, err = fmt.Fprintf(w, "%v [%v] $ ", wd, u.Username)
-
 	return err
 }
 
 func handleInput(w io.Writer, input string, exit chan<- struct{}) error {
-	// Remove trailing spaces.
 	input = strings.TrimSpace(input)
-
-	// Split the input separate the command name and the command arguments.
 	args := strings.Split(input, " ")
 	name, args := args[0], args[1:]
 
-	// Check for built-in commands.
-	// New builtin commands should be added here. Eventually this should be refactored to its own func.
 	switch name {
 	case "cd":
-		return builtins.ChangeDirectory(args...)
+		return changeDirectory(args...)
 	case "env":
-		return builtins.EnvironmentVariables(w, args...)
+		return environmentVariables(w, args...)
 	case "exit":
 		exit <- struct{}{}
 		return nil
+	case "echo":
+		return echo(w, args...)
+	case "pwd":
+		return printWorkingDirectory(w)
+	case "export":
+		return exportVariable(w, args...)
+	case "unset":
+		return unsetVariable(args...)
+	case "history":
+		return showHistory(w)
 	}
 
 	return executeCommand(name, args...)
 }
 
 func executeCommand(name string, arg ...string) error {
-	// Otherwise prep the command
 	cmd := exec.Command(name, arg...)
-
-	// Set the correct output device.
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
-
-	// Execute the command and return the error.
 	return cmd.Run()
+}
+
+// Implementations of the built-in commands:
+
+func changeDirectory(args ...string) error {
+	if len(args) == 0 {
+		return fmt.Errorf("no path provided")
+	}
+	return os.Chdir(args[0])
+}
+
+func environmentVariables(w io.Writer, args ...string) error {
+	for _, env := range os.Environ() {
+		_, err := fmt.Fprintln(w, env)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func echo(w io.Writer, args ...string) error {
+	_, err := fmt.Fprintln(w, strings.Join(args, " "))
+	return err
+}
+
+func printWorkingDirectory(w io.Writer) error {
+	wd, err := os.Getwd()
+	if err != nil {
+		return err
+	}
+	_, err = fmt.Fprintln(w, wd)
+	return err
+}
+
+func exportVariable(w io.Writer, args ...string) error {
+	// This is a placeholder; setting environment variables in Go is not straightforward.
+	return nil
+}
+
+func unsetVariable(args ...string) error {
+	// This is a placeholder; unsetting environment variables in Go is not straightforward.
+	return nil
+}
+
+func showHistory(w io.Writer) error {
+	// This is a placeholder; implementing history requires additional logic.
+	return nil
 }
